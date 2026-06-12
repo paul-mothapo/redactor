@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Redactor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <h1>Image Redactor</h1>
+      </div>
+      <div id="statusGroup" class="hidden">
+        <button id="clearBtn" class="btn btn-danger">
+          <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M3 6h18" />
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+            <path d="M19 6l-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+          <span class="btn-label">Clear</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Initial Upload View -->
+      <div id="uploadZone" class="upload-overlay">
+        <div class="upload-box">
+          <svg class="icon upload-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="M17 8 12 3 7 8" />
+            <path d="M12 3v12" />
+          </svg>
+          <p>Upload image</p>
+          <span>Drop or click</span>
+          <input type="file" id="fileInput" accept="image/*" class="hidden" />
+        </div>
+      </div>
+
+      <!-- Sidebar Controls -->
+      <aside id="sidePanel" class="side-panel hidden">
+        <section>
+          <h2 class="section-title">Detection</h2>
+          <div class="control-group">
+            <button id="scanBtn" class="btn btn-outline">
+              <svg id="scanIcon" class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
+                height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21 21-4.34-4.34" />
+                <circle cx="11" cy="11" r="8" />
+              </svg>
+              <span id="scanText" class="btn-label">Detect Faces</span>
+            </button>
+            <button id="confirmAllBtn" class="btn btn-outline btn-confirm hidden">
+              <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              <span class="btn-label">Confirm All</span>
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="section-title">Redaction</h2>
+          <div class="control-group">
+            <button id="undoBtn" class="btn btn-outline">
+              <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M9 14 4 9l5-5" />
+                <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+              </svg>
+              <span class="btn-label">Undo</span>
+            </button>
+
+            <select id="redactStyle">
+              <option value="black">Black cover</option>
+              <option value="blur">Blur</option>
+              <option value="white">White cover</option>
+            </select>
+
+            <button id="redactBtn" class="btn btn-primary">
+              <svg id="btnIcon" class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
+                height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="14" x="5" y="5" rx="0" />
+              </svg>
+              <span id="btnText" class="btn-label">Apply Redaction</span>
+            </button>
+
+            <button id="downloadBtn" class="btn btn-outline download-btn hidden">
+              <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M7 10l5 5 5-5" />
+                <path d="M12 15V3" />
+              </svg>
+              <span class="btn-label">Download PNG</span>
+            </button>
+          </div>
+        </section>
+
+        <section id="aiPanel" class="hidden">
+          <h2 class="section-title">Status</h2>
+          <div class="ai-card">
+            <div class="ai-status">
+              <span class="loader hidden" id="aiLoader"></span>
+              <span id="aiStatusText">Ready</span>
+            </div>
+            <p id="aiText" class="ai-content"></p>
+            <div id="suggestionChips"></div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Main Viewport -->
+      <div class="viewport">
+        <div id="editorArea" class="hidden">
+          <div class="canvas-container">
+            <canvas id="imgCanvas"></canvas>
+            <canvas id="drawCanvas" tabindex="0" role="application"
+              aria-label="Redaction canvas. Use arrow keys to move a keyboard mask, shift plus arrows to resize it, Enter to add it. For detected faces, use Tab to reach Confirm or Reject buttons."></canvas>
+            <div id="scanOverlay" class="scan-overlay hidden" aria-hidden="true">
+              <div class="scan-grid"></div>
+              <div class="scan-box"></div>
+              <div class="scan-box scan-box-secondary"></div>
+              <div class="scan-box scan-box-tertiary"></div>
+              <div class="scan-readout">
+                <span>Scanning image</span>
+                <span>Locating faces</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output layer (hidden until redacted) -->
+        <canvas id="outputCanvas" class="hidden"></canvas>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadZone = document.getElementById('uploadZone');
+    const editorArea = document.getElementById('editorArea');
+    const sidePanel = document.getElementById('sidePanel');
+    const imgCanvas = document.getElementById('imgCanvas');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const scanOverlay = document.getElementById('scanOverlay');
+    const statusGroup = document.getElementById('statusGroup');
+    const clearBtn = document.getElementById('clearBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const redactBtn = document.getElementById('redactBtn');
+    const scanBtn = document.getElementById('scanBtn');
+    const redactStyle = document.getElementById('redactStyle');
+    const aiPanel = document.getElementById('aiPanel');
+    const aiText = document.getElementById('aiText');
+    const suggestionChips = document.getElementById('suggestionChips');
+    const outputCanvas = document.getElementById('outputCanvas');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const imgCtx = imgCanvas.getContext('2d');
+    const drawCtx = drawCanvas.getContext('2d');
+
+    let img = null;
+    let rects = [];
+    let ghostRects = [];
+    let drawing = false;
+    let startX = 0, startY = 0;
+    let currentRect = null;
+    let hoverIndex = -1;
+    let imageHistory = [];
+    let resizeTimer = null;
+    let hasRedactionResult = false;
+    let keyboardRect = null;
+    let scanBoxTimer = null;
+    let scanSourceWidth = 0;
+    let scanSourceHeight = 0;
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function normalizeDetectionRect(result) {
+      let x1;
+      let y1;
+      let x2;
+      let y2;
+      const confidence = Number(result.confidence ?? result.score ?? result.probability);
+      const label = result.label || result.type || '';
+
+      if (Array.isArray(result.box_2d) && result.box_2d.length >= 4) {
+        const [rawY1, rawX1, rawY2, rawX2] = result.box_2d.map(Number);
+        x1 = Math.min(rawX1, rawX2);
+        y1 = Math.min(rawY1, rawY2);
+        x2 = Math.max(rawX1, rawX2);
+        y2 = Math.max(rawY1, rawY2);
+      } else if (Array.isArray(result.bbox_2d) && result.bbox_2d.length >= 4) {
+        const [rawX1, rawY1, rawX2, rawY2] = result.bbox_2d.map(Number);
+        x1 = Math.min(rawX1, rawX2);
+        y1 = Math.min(rawY1, rawY2);
+        x2 = Math.max(rawX1, rawX2);
+        y2 = Math.max(rawY1, rawY2);
+      } else if (Array.isArray(result.bbox) && result.bbox.length >= 4) {
+        const [rawX1, rawY1, rawX2, rawY2] = result.bbox.map(Number);
+        x1 = Math.min(rawX1, rawX2);
+        y1 = Math.min(rawY1, rawY2);
+        x2 = Math.max(rawX1, rawX2);
+        y2 = Math.max(rawY1, rawY2);
+      } else {
+        const x = Number(result.x ?? result.left ?? result.x1);
+        const y = Number(result.y ?? result.top ?? result.y1);
+        const w = Number(result.w ?? result.width);
+        const h = Number(result.h ?? result.height);
+
+        if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(w) && Number.isFinite(h)) {
+          x1 = Math.min(x, x + w);
+          y1 = Math.min(y, y + h);
+          x2 = Math.max(x, x + w);
+          y2 = Math.max(y, y + h);
+        } else {
+          const rawX2 = Number(result.x2 ?? result.right);
+          const rawY2 = Number(result.y2 ?? result.bottom);
+          x1 = Math.min(x, rawX2);
+          y1 = Math.min(y, rawY2);
+          x2 = Math.max(x, rawX2);
+          y2 = Math.max(y, rawY2);
+        }
+      }
+
+      if (![x1, y1, x2, y2].every(Number.isFinite) || x2 <= x1 || y2 <= y1) return null;
+
+      const sourceW = scanSourceWidth || imgCanvas.width;
+      const sourceH = scanSourceHeight || imgCanvas.height;
+      const maxCoord = Math.max(x1, y1, x2, y2);
+      const isNormalized = maxCoord <= 1001;
+      const scaleX = isNormalized ? imgCanvas.width / 1000 : imgCanvas.width / sourceW;
+      const scaleY = isNormalized ? imgCanvas.height / 1000 : imgCanvas.height / sourceH;
+
+      const rx1 = clamp(x1 * scaleX, 0, imgCanvas.width);
+      const ry1 = clamp(y1 * scaleY, 0, imgCanvas.height);
+      const rx2 = clamp(x2 * scaleX, 0, imgCanvas.width);
+      const ry2 = clamp(y2 * scaleY, 0, imgCanvas.height);
+
+      return {
+        x: rx1,
+        y: ry1,
+        w: rx2 - rx1,
+        h: ry2 - ry1,
+        confidence: Number.isFinite(confidence) ? confidence : null,
+        label
+      };
+    }
+
+    function parseDetectionResults(reply) {
+      const jsonMatch = reply.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.error('No JSON found in scan reply:', reply);
+        throw new Error("The scan didn't return valid data. Check the console for the full message.");
+      }
+
+      const jsonText = jsonMatch[0];
+      try {
+        const parsed = JSON.parse(jsonText);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Scan data was not an array.");
+        }
+        return parsed;
+      } catch (parseErr) {
+        console.warn('Recovering malformed detection data:', jsonText);
+      }
+
+      const objectMatches = jsonText.match(/{[^{}]*}/g) || [];
+      const repaired = objectMatches
+        .map(objectText => {
+          try {
+            return JSON.parse(objectText);
+          } catch (parseErr) {
+            const valueText = objectText.replace(/"[^"]+"\s*:/g, '');
+            const values = valueText.match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
+            if (values.length >= 4) {
+              const [y1, x1, y2, x2] = values;
+              return { box_2d: [y1, x1, y2, x2] };
+            }
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      if (repaired.length === 0) {
+        throw new Error("Scan data was malformed.");
+      }
+
+      return repaired;
+    }
+
+    function createScanPayload() {
+      const maxScanSide = 1600;
+      const scale = Math.min(
+        1,
+        maxScanSide / img.naturalWidth,
+        maxScanSide / img.naturalHeight
+      );
+      const scanCanvas = document.createElement('canvas');
+      scanCanvas.width = Math.round(img.naturalWidth * scale);
+      scanCanvas.height = Math.round(img.naturalHeight * scale);
+      scanCanvas.getContext('2d').drawImage(img, 0, 0, scanCanvas.width, scanCanvas.height);
+      scanSourceWidth = scanCanvas.width;
+      scanSourceHeight = scanCanvas.height;
+      return scanCanvas.toDataURL('image/png').split(',')[1];
+    }
+
+    function saveImageState() {
+      if (!imgCanvas.width || !imgCanvas.height) return;
+      const snapshot = document.createElement('canvas');
+      snapshot.width = imgCanvas.width;
+      snapshot.height = imgCanvas.height;
+      snapshot.getContext('2d').drawImage(imgCanvas, 0, 0);
+      imageHistory.push(snapshot);
+    }
+
+    function restoreLastImageState() {
+      const snapshot = imageHistory.pop();
+      if (!snapshot) return false;
+      imgCtx.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
+      imgCtx.drawImage(snapshot, 0, 0, imgCanvas.width, imgCanvas.height);
+      outputCanvas.width = imgCanvas.width;
+      outputCanvas.height = imgCanvas.height;
+      outputCanvas.getContext('2d').drawImage(imgCanvas, 0, 0);
+      hasRedactionResult = imageHistory.length > 0;
+      updateDownloadState();
+      return true;
+    }
+
+    function getFittedSize() {
+      const viewport = document.querySelector('.viewport');
+      const maxW = Math.max(120, viewport.clientWidth - 24);
+      const maxH = Math.max(120, viewport.clientHeight - 24);
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      return {
+        width: Math.round(img.width * scale),
+        height: Math.round(img.height * scale)
+      };
+    }
+
+    function resizeRectList(list, scaleX, scaleY) {
+      list.forEach(r => {
+        r.x *= scaleX;
+        r.y *= scaleY;
+        r.w *= scaleX;
+        r.h *= scaleY;
+      });
+    }
+
+    function setCanvasSize(width, height) {
+      imgCanvas.width = drawCanvas.width = width;
+      imgCanvas.height = drawCanvas.height = height;
+      imgCanvas.style.width = drawCanvas.style.width = width + 'px';
+      imgCanvas.style.height = drawCanvas.style.height = height + 'px';
+    }
+
+    function resizeEditorToViewport() {
+      if (!img || !imgCanvas.width || !imgCanvas.height) return;
+      const { width, height } = getFittedSize();
+      if (width === imgCanvas.width && height === imgCanvas.height) return;
+
+      const currentImage = document.createElement('canvas');
+      currentImage.width = imgCanvas.width;
+      currentImage.height = imgCanvas.height;
+      currentImage.getContext('2d').drawImage(imgCanvas, 0, 0);
+
+      const scaleX = width / imgCanvas.width;
+      const scaleY = height / imgCanvas.height;
+      resizeRectList(rects, scaleX, scaleY);
+      resizeRectList(ghostRects, scaleX, scaleY);
+      if (currentRect) resizeRectList([currentRect], scaleX, scaleY);
+      if (keyboardRect) resizeRectList([keyboardRect], scaleX, scaleY);
+
+      setCanvasSize(width, height);
+      imgCtx.drawImage(currentImage, 0, 0, width, height);
+      outputCanvas.width = width;
+      outputCanvas.height = height;
+      outputCanvas.getContext('2d').drawImage(imgCanvas, 0, 0);
+      redrawDraw();
+    }
+
+    function updateDownloadState() {
+      downloadBtn.classList.toggle('hidden', !hasRedactionResult);
+    }
+
+    function updateDetectionControls() {
+      const hasDetections = ghostRects.length > 0;
+      confirmAllBtn.classList.toggle('hidden', !hasDetections);
+      suggestionChips.innerHTML = '';
+
+      ghostRects.forEach((rect, index) => {
+        const confidenceValue = Number.isFinite(rect.confidence)
+          ? rect.confidence > 1 ? rect.confidence : rect.confidence * 100
+          : null;
+        const confidence = confidenceValue === null
+          ? ' review'
+          : ` ${Math.round(clamp(confidenceValue, 0, 100))}%`;
+        const label = rect.label ? rect.label : `Detection ${index + 1}`;
+        const row = document.createElement('div');
+        row.className = 'detection-row';
+        row.innerHTML = `
+      <span>${label}<small>${confidence}</small></span>
+      <button type="button" class="mini-btn" data-action="confirm" data-index="${index}">Confirm</button>
+      <button type="button" class="mini-btn" data-action="reject" data-index="${index}">Reject</button>
+    `;
+        suggestionChips.appendChild(row);
+      });
+    }
+
+    function confirmGhostRect(index) {
+      if (index < 0 || index >= ghostRects.length) return;
+      const [confirmedRect] = ghostRects.splice(index, 1);
+      rects.push({ ...confirmedRect, source: 'ghost' });
+      hoverIndex = clamp(Math.min(index, ghostRects.length - 1), -1, ghostRects.length - 1);
+      updateDetectionControls();
+      redrawDraw();
+    }
+
+    function rejectGhostRect(index) {
+      if (index < 0 || index >= ghostRects.length) return;
+      ghostRects.splice(index, 1);
+      hoverIndex = clamp(Math.min(index, ghostRects.length - 1), -1, ghostRects.length - 1);
+      updateDetectionControls();
+      redrawDraw();
+    }
+
+    function normalizeScanResults(results) {
+      return results
+        .map(normalizeDetectionRect)
+        .filter(r => r && r.w > 5 && r.h > 5)
+        .sort((a, b) => {
+          const aConfidence = Number.isFinite(a.confidence) ? a.confidence : -1;
+          const bConfidence = Number.isFinite(b.confidence) ? b.confidence : -1;
+          return bConfidence - aConfidence;
+        });
+    }
+
+    function ensureKeyboardRect() {
+      if (keyboardRect || !imgCanvas.width || !imgCanvas.height) return;
+      const w = Math.max(40, Math.round(imgCanvas.width * 0.18));
+      const h = Math.max(40, Math.round(imgCanvas.height * 0.18));
+      keyboardRect = {
+        x: Math.round((imgCanvas.width - w) / 2),
+        y: Math.round((imgCanvas.height - h) / 2),
+        w,
+        h
+      };
+    }
+
+    function moveScanBoxes() {
+      const boxes = [...scanOverlay.querySelectorAll('.scan-box')];
+      if (!boxes.length || scanOverlay.classList.contains('hidden')) return;
+
+      const styles = getComputedStyle(scanOverlay);
+      const cell = parseFloat(styles.getPropertyValue('--scan-cell')) || 32;
+      const boxSize = parseFloat(styles.getPropertyValue('--scan-box-size')) || cell;
+      const maxCol = Math.max(0, Math.floor((scanOverlay.clientWidth - boxSize) / cell));
+      const maxRow = Math.max(0, Math.floor((scanOverlay.clientHeight - boxSize) / cell));
+
+      boxes.forEach(box => {
+        const col = Math.floor(Math.random() * (maxCol + 1));
+        const row = Math.floor(Math.random() * (maxRow + 1));
+        box.style.left = `${col * cell}px`;
+        box.style.top = `${row * cell}px`;
+      });
+    }
+
+    function startScanBoxes() {
+      stopScanBoxes();
+      moveScanBoxes();
+      scanBoxTimer = setInterval(moveScanBoxes, 120);
+    }
+
+    function stopScanBoxes() {
+      if (!scanBoxTimer) return;
+      clearInterval(scanBoxTimer);
+      scanBoxTimer = null;
+    }
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    function scaleCoord(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      const scaleX = drawCanvas.width / rect.width;
+      const scaleY = drawCanvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const image = new Image();
+        image.onload = () => {
+          img = image;
+          uploadZone.classList.add('hidden');
+          editorArea.classList.remove('hidden');
+          sidePanel.classList.remove('hidden');
+          statusGroup.classList.remove('hidden');
+
+          const { width: W, height: H } = getFittedSize();
+
+          setCanvasSize(W, H);
+          imgCtx.drawImage(image, 0, 0, W, H);
+          rects = []; ghostRects = [];
+          imageHistory = [];
+          hasRedactionResult = false;
+          keyboardRect = null;
+          scanSourceWidth = 0;
+          scanSourceHeight = 0;
+          hoverIndex = -1;
+          updateDownloadState();
+          updateDetectionControls();
+          redrawDraw();
+        };
+        image.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    drawCanvas.addEventListener('pointerdown', startDraw);
+    drawCanvas.addEventListener('pointermove', moveDraw);
+    drawCanvas.addEventListener('pointerup', endDraw);
+    drawCanvas.addEventListener('pointercancel', cancelDraw);
+    drawCanvas.addEventListener('pointerleave', handlePointerLeave);
+    drawCanvas.addEventListener('focus', () => {
+      ensureKeyboardRect();
+      redrawDraw();
+    });
+    drawCanvas.addEventListener('blur', () => {
+      keyboardRect = null;
+      redrawDraw();
+    });
+    drawCanvas.addEventListener('keydown', handleCanvasKeydown);
+
+    function handleHover(e) {
+      if (drawing) return;
+      const p = scaleCoord(e);
+      const oldHover = hoverIndex;
+      hoverIndex = ghostRects.findIndex(r => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h);
+      if (oldHover !== hoverIndex) redrawDraw();
+    }
+
+    function startDraw(e) {
+      if (!img) return;
+      e.preventDefault();
+      const p = scaleCoord(e);
+      const hitIndex = ghostRects.findIndex(r => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h);
+      if (hitIndex !== -1) {
+        confirmGhostRect(hitIndex);
+        return;
+      }
+
+      drawing = true;
+      drawCanvas.setPointerCapture(e.pointerId);
+      startX = p.x;
+      startY = p.y;
+      currentRect = null;
+    }
+
+    function moveDraw(e) {
+      if (!img) return;
+      if (!drawing) {
+        if (e.pointerType === 'mouse') handleHover(e);
+        return;
+      }
+      e.preventDefault();
+      const p = scaleCoord(e);
+      currentRect = {
+        x: Math.min(startX, p.x),
+        y: Math.min(startY, p.y),
+        w: Math.abs(p.x - startX),
+        h: Math.abs(p.y - startY)
+      };
+      redrawDraw();
+    }
+
+    function endDraw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      drawing = false;
+      if (drawCanvas.hasPointerCapture(e.pointerId)) drawCanvas.releasePointerCapture(e.pointerId);
+      if (currentRect && currentRect.w > 5 && currentRect.h > 5) {
+        rects.push({ ...currentRect, source: 'manual' });
+      }
+      currentRect = null;
+      redrawDraw();
+    }
+
+    function cancelDraw(e) {
+      drawing = false;
+      currentRect = null;
+      if (drawCanvas.hasPointerCapture(e.pointerId)) drawCanvas.releasePointerCapture(e.pointerId);
+      redrawDraw();
+    }
+
+    function handlePointerLeave(e) {
+      if (drawing || e.pointerType !== 'mouse') return;
+      hoverIndex = -1;
+      redrawDraw();
+    }
+
+    function handleCanvasKeydown(e) {
+      if (!img) return;
+
+      if (ghostRects.length > 0 && ['Tab', 'Enter', ' ', 'Backspace', 'Delete'].includes(e.key)) {
+        if (e.key === 'Tab') return;
+        e.preventDefault();
+        if (hoverIndex === -1) hoverIndex = 0;
+        if (e.key === 'Enter' || e.key === ' ') confirmGhostRect(hoverIndex);
+        if (e.key === 'Backspace' || e.key === 'Delete') rejectGhostRect(hoverIndex);
+        return;
+      }
+
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(e.key)) return;
+      e.preventDefault();
+      ensureKeyboardRect();
+
+      const step = e.altKey ? 1 : 10;
+      if (e.key === 'Enter' || e.key === ' ') {
+        rects.push({ ...keyboardRect, source: 'manual' });
+        redrawDraw();
+        return;
+      }
+
+      const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+      const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+
+      if (e.shiftKey) {
+        keyboardRect.w = clamp(keyboardRect.w + dx, 20, imgCanvas.width - keyboardRect.x);
+        keyboardRect.h = clamp(keyboardRect.h + dy, 20, imgCanvas.height - keyboardRect.y);
+      } else {
+        keyboardRect.x = clamp(keyboardRect.x + dx, 0, imgCanvas.width - keyboardRect.w);
+        keyboardRect.y = clamp(keyboardRect.y + dy, 0, imgCanvas.height - keyboardRect.h);
+      }
+
+      redrawDraw();
+    }
+
+    function redrawDraw() {
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+      ghostRects.forEach((r, i) => {
+        const isHovered = i === hoverIndex;
+        drawCtx.fillStyle = isHovered ? 'rgba(0, 0, 0, 0.34)' : 'rgba(255, 255, 255, 0.18)';
+        drawCtx.fillRect(r.x, r.y, r.w, r.h);
+        drawCtx.strokeStyle = isHovered ? '#000' : '#fff';
+        drawCtx.setLineDash([2, 4]);
+        drawCtx.lineWidth = isHovered ? 2 : 1;
+        drawCtx.strokeRect(r.x, r.y, r.w, r.h);
+
+        drawCtx.setLineDash([]);
+        drawCtx.fillStyle = '#000';
+        drawCtx.fillRect(r.x, r.y, 22, 14);
+        drawCtx.fillStyle = '#fff';
+        drawCtx.font = 'bold 9px Inter';
+        drawCtx.textAlign = 'center';
+        drawCtx.fillText(`G${i + 1}`, r.x + 11, r.y + 11);
+        drawCtx.textAlign = 'start';
+      });
+
+      const allRects = currentRect ? [...rects, currentRect] : rects;
+      allRects.forEach((r, i) => {
+        drawCtx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        drawCtx.fillRect(r.x, r.y, r.w, r.h);
+        drawCtx.strokeStyle = '#fff';
+        drawCtx.setLineDash([]);
+        drawCtx.lineWidth = 2;
+        drawCtx.strokeRect(r.x, r.y, r.w, r.h);
+        drawCtx.strokeStyle = '#000';
+        drawCtx.lineWidth = 1;
+        drawCtx.strokeRect(r.x + 2, r.y + 2, Math.max(0, r.w - 4), Math.max(0, r.h - 4));
+        if (i < rects.length) {
+          drawCtx.fillStyle = '#000';
+          drawCtx.fillRect(r.x, r.y, 20, 20);
+          drawCtx.fillStyle = '#fff';
+          drawCtx.font = 'bold 11px Inter';
+          drawCtx.textAlign = 'center';
+          drawCtx.fillText(i + 1, r.x + 10, r.y + 14);
+          drawCtx.textAlign = 'start';
+        }
+      });
+
+      if (keyboardRect) {
+        drawCtx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        drawCtx.fillRect(keyboardRect.x, keyboardRect.y, keyboardRect.w, keyboardRect.h);
+        drawCtx.strokeStyle = '#000';
+        drawCtx.setLineDash([6, 4]);
+        drawCtx.lineWidth = 2;
+        drawCtx.strokeRect(keyboardRect.x, keyboardRect.y, keyboardRect.w, keyboardRect.h);
+        drawCtx.setLineDash([]);
+      }
+    }
+
+    const confirmAllBtn = document.getElementById('confirmAllBtn');
+    suggestionChips.addEventListener('click', e => {
+      const button = e.target.closest('button[data-action]');
+      if (!button) return;
+      const index = Number(button.dataset.index);
+      if (button.dataset.action === 'confirm') confirmGhostRect(index);
+      if (button.dataset.action === 'reject') rejectGhostRect(index);
+    });
+
+    confirmAllBtn.addEventListener('click', () => {
+      rects = [
+        ...rects,
+        ...ghostRects.map(r => ({ ...r, source: 'ghost' }))
+      ];
+      ghostRects = [];
+      hoverIndex = -1;
+      updateDetectionControls();
+      redrawDraw();
+    });
+    undoBtn.addEventListener('click', () => {
+      if (rects.length > 0) {
+        const lastRect = rects.pop();
+        if (lastRect.source === 'ghost') {
+          const { source, ...restoredGhostRect } = lastRect;
+          ghostRects.push(restoredGhostRect);
+          updateDetectionControls();
+        }
+        redrawDraw();
+        return;
+      }
+
+      if (restoreLastImageState()) {
+        hoverIndex = -1;
+        ghostRects = [];
+        updateDetectionControls();
+        aiPanel.classList.remove('hidden');
+        aiText.textContent = 'Last redaction undone.';
+        redrawDraw();
+      }
+    });
+    clearBtn.addEventListener('click', () => location.reload());
+
+    window.addEventListener('resize', () => {
+      if (!img) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (drawing) {
+          drawing = false;
+          currentRect = null;
+        }
+        resizeEditorToViewport();
+      }, 120);
+    });
+
+    scanBtn.addEventListener('click', async () => {
+      if (!img) return;
+      scanBtn.disabled = true;
+      scanBtn.setAttribute('aria-busy', 'true');
+      scanOverlay.classList.remove('hidden');
+      startScanBoxes();
+      drawCanvas.style.pointerEvents = 'none';
+      aiPanel.classList.remove('hidden');
+      aiText.textContent = 'Scanning image...';
+      ghostRects = [];
+      hoverIndex = -1;
+      updateDetectionControls();
+
+      const base64 = createScanPayload();
+
+      const prompt = `[OBJECT_DETECTION]
+  TASK: Detect every area that should be redacted from an identification document.
+  INCLUDE: primary face, secondary/ghost portrait, full name, document or ID numbers, address, date of birth, signature, license/card number, issue dates, expiry dates, barcodes, QR codes, and any machine-readable personal identifiers.
+  EXCLUDE: decorative artwork, state names, card titles, field labels, seals, icons, sample watermarks, and non-personal static text such as "IDENTIFICATION CARD", "NORTH CAROLINA", "Sex", "Eyes", "Hair", "Height", "Race", "ISS", or "EXP" unless the adjacent personal value is inside the same box.
+  GROUPING: Return one bounding box per visible sensitive region. For text lines, group the whole sensitive line or field, not individual letters.
+  FORMAT: Return ONLY a JSON array of objects: [{"box_2d":[ymin,xmin,ymax,xmax],"label":"short label","confidence":0.0}].
+  COORDINATES: Normalize every box to a 0-1000 coordinate space relative to the provided scan image.
+  IMPORTANT: Use box_2d in [ymin,xmin,ymax,xmax] order. No markdown. No explanation.`;
+
+      try {
+        const response = await fetch('/api/redact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, base64 })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(`Server error: ${response.status} ${errData.details || ''}`);
+        }
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content || '';
+
+        const results = parseDetectionResults(reply);
+
+        ghostRects = normalizeScanResults(results);
+        redrawDraw();
+
+        updateDetectionControls();
+
+        aiPanel.classList.remove('hidden');
+        aiText.textContent = ghostRects.length > 0 ? `Detected ${ghostRects.length} areas.` : "No areas detected.";
+      } catch (err) {
+        console.error('Scanning Error:', err);
+        alert(`Scanning failed: ${err.message}`);
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.removeAttribute('aria-busy');
+        stopScanBoxes();
+        scanOverlay.classList.add('hidden');
+        drawCanvas.style.pointerEvents = '';
+      }
+    });
+
+    redactBtn.addEventListener('click', () => {
+      if (!img || rects.length === 0) return alert('No areas marked.');
+      redactBtn.disabled = true;
+      const text = document.getElementById('btnText');
+      if (text) text.textContent = 'Applying';
+      aiPanel.classList.remove('hidden');
+      applyRedaction();
+      aiText.textContent = 'Redaction applied.';
+      redactBtn.disabled = false;
+      if (text) text.textContent = 'Apply Redaction';
+    });
+
+    function applyRedaction() {
+      const style = redactStyle.value;
+      saveImageState();
+      outputCanvas.width = imgCanvas.width;
+      outputCanvas.height = imgCanvas.height;
+      const outCtx = outputCanvas.getContext('2d');
+      outCtx.drawImage(imgCanvas, 0, 0);
+
+      rects.forEach(r => {
+        const rx = Math.round(r.x), ry = Math.round(r.y), rw = Math.round(r.w), rh = Math.round(r.h);
+        if (style === 'black') {
+          outCtx.fillStyle = '#000';
+          outCtx.fillRect(rx, ry, rw, rh);
+        } else if (style === 'blur') {
+          const sampleW = Math.max(1, Math.ceil(rw / 36));
+          const sampleH = Math.max(1, Math.ceil(rh / 36));
+          const tiny = document.createElement('canvas');
+          tiny.width = sampleW;
+          tiny.height = sampleH;
+          const tinyCtx = tiny.getContext('2d');
+          tinyCtx.imageSmoothingEnabled = false;
+          tinyCtx.drawImage(outputCanvas, rx, ry, rw, rh, 0, 0, sampleW, sampleH);
+
+          const hardened = document.createElement('canvas');
+          hardened.width = rw;
+          hardened.height = rh;
+          const hardCtx = hardened.getContext('2d');
+          hardCtx.imageSmoothingEnabled = false;
+          hardCtx.drawImage(tiny, 0, 0, sampleW, sampleH, 0, 0, rw, rh);
+          hardCtx.filter = 'blur(28px) contrast(0.35) brightness(0.9)';
+          hardCtx.drawImage(hardened, 0, 0);
+          hardCtx.filter = 'none';
+          hardCtx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+          hardCtx.fillRect(0, 0, rw, rh);
+          outCtx.drawImage(hardened, rx, ry, rw, rh);
+        } else if (style === 'white') {
+          outCtx.fillStyle = '#fff';
+          outCtx.fillRect(rx, ry, rw, rh);
+        }
+      });
+      imgCtx.drawImage(outputCanvas, 0, 0);
+      rects = []; ghostRects = [];
+      hoverIndex = -1;
+      hasRedactionResult = true;
+      updateDetectionControls();
+      updateDownloadState();
+      redrawDraw();
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `redacted-${Date.now()}.png`;
+      link.href = outputCanvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+
+</html>

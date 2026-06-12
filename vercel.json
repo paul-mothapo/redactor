@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/redact.mjs": {
+      "maxDuration": 60
+    }
+  }
+}
